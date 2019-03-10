@@ -268,7 +268,8 @@ void Tick1()
             //LCD_DisplayString(1,"test_song");
             if(sequence == 0)
             {
-                MAX7219_MatrixSetRow64(3,trans(test01[0]));
+                MAX7219_MatrixSetRow64(3,symbol[2]);
+                MAX7219_MatrixSetRow64(0,trans(test01[0]));
                 MAX7219_MatrixUpdate();
                 waitTime(100);
                 MAX7219_MatrixInit();
@@ -283,7 +284,9 @@ void Tick1()
                 if (i == 1)
                 {
                     MAX7219_MatrixSetRow64(3,trans(test01[sequence]));
-                    MAX7219_MatrixSetRow64(2,test[1]);
+                    //MAX7219_MatrixSetRow64(2,test[1]);
+                    if(sequence<31){MAX7219_MatrixSetRow64(0,trans(test01[sequence+1]));}
+                    else{MAX7219_MatrixSetRow64(0,symbol[2]);}
                     MAX7219_MatrixUpdate();
                 }
                 //MAX7219_MatrixRShift(32/test02[sequence]);
