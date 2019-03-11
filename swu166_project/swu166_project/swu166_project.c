@@ -17,9 +17,13 @@
 #include "MAX7219.c"
 #include "stdlib.h"
 
-enum Main_State{Start, menu, score_display, count_A, count_B} mainState;
+enum Main_State{Start, menu, score_display, count_A, count_B, count_C} mainState;
 unsigned char sequence = 0;
-int scoreA = 1;
+int score_current = 1;
+
+unsigned char b_j_n[] = {'1','2','3','1','1','2','3','1','3','4','5','3','4','5','5','6','5','4','3','1','5','6','5','4','3','1','2','5','1','2','5','1'};
+unsigned short b_j_s[] = {50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,100 ,50 ,50 ,100 ,25 ,25 ,25 ,25 ,50 ,50 ,25 ,25 ,25 ,25 ,50 ,50, 50, 50, 100, 50, 50, 100 };
+    
 double Convert_Key_to_Note()
 {
     
@@ -79,6 +83,8 @@ void PWM_off() {
     TCCR0B = 0x00;
 
 }
+
+
 void displayBlank()
 {
     MAX7219_MatrixInit();
@@ -109,7 +115,7 @@ void displayRank()
     MAX7219_MatrixSetRow64(3, rank[0]);
     MAX7219_MatrixSetRow64(2, rank[1]);
     MAX7219_MatrixSetRow64(1, rank[2]);
-    MAX7219_MatrixSetRow64(0, rank_analyse(scoreA));
+    MAX7219_MatrixSetRow64(0, rank_analyse(score_current));
     MAX7219_MatrixUpdate();
 }
 void waitTime(int timeee)
@@ -173,6 +179,27 @@ void set_bar_pos(int a)
         default:MAX7219_MatrixSetRow64(2, symbol[2]); MAX7219_MatrixSetRow64(1, symbol[2]); break;
     }
 }
+
+void starting()
+{
+    MAX7219_MatrixInit();
+    MAX7219_MatrixSetRow64(0,modeee[0]);
+    MAX7219_MatrixSetRow64(1,modeee[1]);
+    MAX7219_MatrixSetRow64(2,modeee[2]);
+    MAX7219_MatrixSetRow64(3,modeee[3]);
+    MAX7219_MatrixUpdate();
+    waitTime(600);
+    MAX7219_MatrixInit();
+    MAX7219_MatrixSetRow64(3,starttt[0]);
+    MAX7219_MatrixSetRow64(2,starttt[1]);
+    MAX7219_MatrixSetRow64(1,starttt[2]);
+    MAX7219_MatrixSetRow64(0,trans(b_j_n[0]));
+    MAX7219_MatrixUpdate();
+    waitTime(300);
+    MAX7219_MatrixInit();
+    MAX7219_MatrixUpdate();
+}
+/*
 uint64_t bar_position(int a)
 {
     switch(a)
@@ -185,39 +212,44 @@ uint64_t bar_position(int a)
         case 6: return test[6];break;
         case 7: return test[7];break;
     }
-}
+}*/
 unsigned char menuFlag = 0;
-unsigned char test01[] = {'1','2','3','1','1','2','3','1','3','4','5','3','4','5','5','6','5','4','3','1','5','6','5','4','3','1','2','5','1','2','5','1'};
-unsigned short test02[] = {50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,100 ,50 ,50 ,100 ,25 ,25 ,25 ,25 ,50 ,50 ,25 ,25 ,25 ,25 ,50 ,50, 50, 50, 100, 50, 50, 100 };
+
 unsigned char key = 0;
 //unsigned char sequence = 0;
-//int scoreA = 1;
+//int score_current = 1;
 char intStr[10];
-void Tick1()
+void Tick()
 {
     switch(mainState)
     {
         case Start: {mainState = menu; break;}
         case menu: {
-            if(GetKeypadKey() == 'A'){mainState = count_A; sequence = 0; itoa(scoreA, intStr, 10);LCD_DisplayString(1, intStr); break;}
-            else if(GetKeypadKey() == 'B'){mainState = count_B; break;}
+            if(GetKeypadKey() == 'A'){mainState = count_A; sequence = 0; itoa(score_current, intStr, 10);LCD_DisplayString(1, intStr); break;}
+            else if(GetKeypadKey() == 'B'){mainState = count_B; sequence = 0; itoa(score_current, intStr, 10);LCD_DisplayString(1, intStr);break;}
+            else if(GetKeypadKey() == 'C'){mainState = count_C; sequence = 0; itoa(score_current, intStr, 10);LCD_DisplayString(1, intStr);break;}
+            else if(GetKeypadKey() == 'D'){mainState = menu; break;}
             else{break;}
         }
         case score_display:{
-            itoa(scoreA, intStr, 10);
+            itoa(score_current, intStr, 10);
             LCD_DisplayString(1, intStr);
             MAX7219_MatrixInit();
             MAX7219_MatrixUpdate();
             waitTime(200);
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 displayFin();
-                waitTime(80);
+                waitTime(50);
                 displayBlank();
-                waitTime(80);
+                waitTime(50);
             }
+            displayFin();
+            waitTime(350);
+            displayBlank();
+            waitTime(60);
             displayRank();
-            waitTime(600);
+            waitTime(200);
             while(1){if(GetKeypadKey()!='\0')break;}
             
             mainState = menu;
@@ -226,9 +258,11 @@ void Tick1()
         case count_A: 
             MAX7219_MatrixInit();
             MAX7219_MatrixUpdate();
-            if(sequence >= sizeof(test01)/sizeof(test01[0])){mainState = score_display;}
+            if(sequence >= sizeof(b_j_n)/sizeof(b_j_n[0])){mainState = score_display;}
+            if (GetKeypadKey() == 'D'){mainState = menu;}
             break;
         case count_B: mainState = menu; break;
+        case count_C: mainState = menu; break;
         default: break;
     }
     switch(mainState)
@@ -237,8 +271,8 @@ void Tick1()
         case menu:
             if (menuFlag == 0)
             {
-                itoa(scoreA, intStr, 10);
-                LCD_DisplayString(1, "A = test_song, B = SenbonZakura");
+                itoa(score_current, intStr, 10);
+                LCD_DisplayString(1, "A:Bro.John B:Lem                         on C:placeholder D:reset");
                 //LCD_DisplayString(1, intStr);
                 for (int i = 0; i < 3; i++)
                 {
@@ -260,7 +294,7 @@ void Tick1()
                 MAX7219_MatrixUpdate();
             }
             menuFlag = 1;
-            scoreA = 0;
+            score_current = 0;
             break;
             
         case count_A:
@@ -268,33 +302,29 @@ void Tick1()
             //LCD_DisplayString(1,"test_song");
             if(sequence == 0)
             {
-                MAX7219_MatrixSetRow64(3,symbol[2]);
-                MAX7219_MatrixSetRow64(0,trans(test01[0]));
-                MAX7219_MatrixUpdate();
-                waitTime(100);
-                MAX7219_MatrixInit();
-                MAX7219_MatrixUpdate();
+                starting();
             }
             unsigned int j = 1;
-            for (int i = 1; i <= test02[sequence]*1.75; i++)
+            int k = b_j_s[sequence]*1.75 / 17;
+            for (int i = 1; i <= b_j_s[sequence]*1.75; i++)
             {
                 while (!TimerFlag){}
                 TimerFlag = 0;
                 
                 if (i == 1)
                 {
-                    MAX7219_MatrixSetRow64(3,trans(test01[sequence]));
+                    MAX7219_MatrixSetRow64(3,trans(b_j_n[sequence]));
                     //MAX7219_MatrixSetRow64(2,test[1]);
-                    if(sequence<31){MAX7219_MatrixSetRow64(0,trans(test01[sequence+1]));}
+                    if(sequence<31){MAX7219_MatrixSetRow64(0,trans(b_j_n[sequence+1]));}
                     else{MAX7219_MatrixSetRow64(0,symbol[2]);}
                     MAX7219_MatrixUpdate();
                 }
-                //MAX7219_MatrixRShift(32/test02[sequence]);
-                if(GetKeypadKey()==test01[sequence])
+                //MAX7219_MatrixRShift(32/b_j_s[sequence]);
+                if(GetKeypadKey()==b_j_n[sequence])
                 {
-                    scoreA = scoreA + 1;              
+                    score_current = score_current + 1;              
                 }
-                if (i % 10 ==0)
+                if (i % k ==0)
                 {
                     set_bar_pos(j);
                     j++;
@@ -304,7 +334,7 @@ void Tick1()
                     MAX7219_MatrixUpdate();
                 }
                 if (i %20 == 0){
-                    itoa(scoreA, intStr, 10);
+                    itoa(score_current, intStr, 10);
                     LCD_DisplayString(1, intStr);
                 }                
             }
@@ -335,10 +365,8 @@ int main(void)
     PWM_on();
 
 	while(1){
-
 		key = GetKeypadKey();
-		Tick1();
-		
+		Tick();
 	}
 }
 
