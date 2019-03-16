@@ -22,8 +22,10 @@ unsigned char sequence = 0;
 int score_current = 1;
 
 unsigned char b_j_n[] = {'1','2','3','1','1','2','3','1','3','4','5','3','4','5','5','6','5','4','3','1','5','6','5','4','3','1','2','5','1','2','5','1'};
-unsigned short b_j_s[] = {50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,100 ,50 ,50 ,100 ,25 ,25 ,25 ,25 ,50 ,50 ,25 ,25 ,25 ,25 ,50 ,50, 50, 50, 100, 50, 50, 100 };
-    
+unsigned short b_j_s[] ={50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,50 ,100,50 ,50 ,100,25 ,25 ,25 ,25 ,50 ,50 ,25 ,25 ,25 ,25 ,50 ,50 ,50 ,50 ,100,50 ,50 ,100};
+
+unsigned char lemon_n[] = {'8','9','0','8','6','9','7','5','3','7','6','5','1','5','3'};
+unsigned short lemon_s[] ={25 ,25 ,75 ,25 ,62 ,28 ,50 ,25 ,75 ,50 ,50 ,25 ,75 ,50 ,100};
 double Convert_Key_to_Note()
 {
     
@@ -193,7 +195,14 @@ void starting()
     MAX7219_MatrixSetRow64(3,starttt[0]);
     MAX7219_MatrixSetRow64(2,starttt[1]);
     MAX7219_MatrixSetRow64(1,starttt[2]);
-    MAX7219_MatrixSetRow64(0,trans(b_j_n[0]));
+    if (mainState == count_A)
+    {
+        MAX7219_MatrixSetRow64(0,trans(b_j_n[0]));
+    }
+    else{
+        MAX7219_MatrixSetRow64(0,trans(lemon_n[0]));
+    }
+    
     MAX7219_MatrixUpdate();
     waitTime(300);
     MAX7219_MatrixInit();
@@ -261,7 +270,13 @@ void Tick()
             if(sequence >= sizeof(b_j_n)/sizeof(b_j_n[0])){mainState = score_display;}
             if (GetKeypadKey() == 'D'){mainState = menu;}
             break;
-        case count_B: mainState = menu; break;
+        case count_B: 
+            MAX7219_MatrixInit();
+            MAX7219_MatrixUpdate();
+            if(sequence >= sizeof(lemon_n)/sizeof(lemon_n[0])){mainState = score_display;}
+            if (GetKeypadKey() == 'D'){mainState = menu;}
+            break;
+        break;
         case count_C: mainState = menu; break;
         default: break;
     }
@@ -272,7 +287,7 @@ void Tick()
             if (menuFlag == 0)
             {
                 itoa(score_current, intStr, 10);
-                LCD_DisplayString(1, "A:Bro.John B:Lem                         on C:placeholder D:reset");
+                LCD_DisplayString(1, "A:Bro.John B:Lem                        on C:placeholder D:reset");
                 //LCD_DisplayString(1, intStr);
                 for (int i = 0; i < 3; i++)
                 {
@@ -341,6 +356,49 @@ void Tick()
             
             sequence++;
         break;
+        case count_B:
+            menuFlag = 0;
+            //LCD_DisplayString(1,"test_song");
+            if(sequence == 0)
+            {
+                starting();
+            }
+            unsigned int j2 = 1;
+            int k2 = lemon_s[sequence]*1.75 / 17;
+            for (int i = 1; i <= lemon_s[sequence]*1.75; i++)
+            {
+                while (!TimerFlag){}
+                TimerFlag = 0;
+                
+                if (i == 1)
+                {
+                    MAX7219_MatrixSetRow64(3,trans(lemon_n[sequence]));
+                    //MAX7219_MatrixSetRow64(2,test[1]);
+                    if(sequence<31){MAX7219_MatrixSetRow64(0,trans(lemon_n[sequence+1]));}
+                    else{MAX7219_MatrixSetRow64(0,symbol[2]);}
+                    MAX7219_MatrixUpdate();
+                }
+                //MAX7219_MatrixRShift(32/b_j_s[sequence]);
+                if(GetKeypadKey()==lemon_n[sequence])
+                {
+                    score_current = score_current + 1;
+                }
+                if (i % k2 ==0)
+                {
+                    set_bar_pos(j2);
+                    j2++;
+                }
+                if (i%5 == 0)
+                {
+                    MAX7219_MatrixUpdate();
+                }
+                if (i %20 == 0){
+                    itoa(score_current, intStr, 10);
+                    LCD_DisplayString(1, intStr);
+                }
+            }
+            
+            sequence++;
         default: menuFlag = 0; break;
     }
 
